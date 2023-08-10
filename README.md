@@ -28,7 +28,9 @@ path with all the products of the code. You will also need to set the correct pa
 
 
 After setting up the path, Chromie runs through different modules to reduce the data from level-1 NICER files to publication-level
-products. Each module can be run independently, provided the previous steps completed succesfully. 
+products. Each module can be run independently, provided the previous steps completed succesfully. The only exception is run\_nicerl2()
+and extract\_spectra(); currently you always need to run the former before the latter due to weird behavior on HEASOFT, and you also 
+always need to run set\_mkf() first. This will be fixed in a future version. 
 
 
 Set\_mkf() moves the filter files and sets up the path to these files correctly. Run\_nicerl2 produces cleaned level-2 Event files, 

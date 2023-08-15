@@ -12,7 +12,7 @@ def extract_spectra(mkf):
         nicerl3.detlist="launch,-14,-34"
         nicerl3.grouptype="none"
         #add the KP values to the mkf file during nicerl3 processing
-        nicerl3.geomag_path="/home/matteo/Software/Geomag/"
+        nicerl3.geomag_path=paths.geomag_path
         nicerl3.geomag_columns="kp_noaa.fits(KP)"
         print("------------------------------------------------------------")
         resl3 = nicerl3(indir=paths.obsdir[index], noprompt=True, cldir=paths.outdir[index], 

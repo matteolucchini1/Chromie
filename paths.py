@@ -7,7 +7,8 @@ obsid_list = np.genfromtxt("Obsid_list/"+source_name+".lst",dtype='U21')
 obsid_list = np.array(obsid_list, ndmin=1, copy=False)
 nicerdatadir = '/home/matteo/Data/'+source_name+'/'
 
-#tbd: specify geomag path here
+#specify Geomagnetic path for spectral extraction
+geomag_path = "/home/matteo/Software/Geomag/"
 
 #place final products in a new subdirectories
 productdir = nicerdatadir+'Products/'

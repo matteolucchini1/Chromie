@@ -31,6 +31,9 @@ class Logger(object):
             self.terminal.write(message)
         self.log.write(message)
 
+    def flush(self):
+        self.terminal.flush()
+        self.log.flush()
 
 def output(filename):
     logfile = paths.logdir + filename + '.log'

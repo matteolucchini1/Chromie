@@ -78,7 +78,7 @@ def plot_hid(rate,rate_err,hr_1,hr_1_err,hr_2,hr_2_err):
     ax1.errorbar(hr_1,rate,xerr=hr_1_err,yerr=rate_err,
                  fmt='o',ms=10,mfc=colors[3],mec=colors[3],color=colors[2],ls='-')
     ax1.set_yscale("log",base=10)
-    ax1.set_ylabel('0.5-10 keV counts/s',fontsize=20)
+    ax1.set_ylabel('0.3-10 keV counts/s',fontsize=20)
     ax1.set_xlabel('3-10 keV/0.3-3 keV counts/s',fontsize=20)
     
     ax2.errorbar(hr_2,rate,xerr=hr_2_err,yerr=rate_err,
@@ -86,7 +86,7 @@ def plot_hid(rate,rate_err,hr_1,hr_1_err,hr_2,hr_2_err):
     ax2.set_yscale("log",base=10)
     ax2.yaxis.set_major_formatter(plt.NullFormatter())  
     ax2.yaxis.set_minor_formatter(plt.NullFormatter())  
-    ax2.set_xlabel('6-10 keV/3-6 keV counts/s',fontsize=20)
+    ax2.set_xlabel('6-12 keV/3-6 keV counts/s',fontsize=20)
     plt.tight_layout()
     fig.subplots_adjust(wspace=0)  
     fig.savefig(paths.plotdir+"HID_"+paths.source_name+".pdf") 
@@ -115,6 +115,8 @@ def plot_powercolours(colors_1,colors_2,colors_3):
     ax1.scatter(4.51920, 0.453724,marker='X',color='black',s=400,zorder=20)
     ax1.set_xscale("log",base=10)
     ax1.set_yscale("log",base=10)
+    ax1.set_xlim([0.0011,200.0])
+    ax1.set_ylim([0.01,250.0])
     ax1.set_xlabel("PC1",fontsize=20)
     ax1.set_ylabel("PC2",fontsize=20)
     ax1.legend(loc="best")
@@ -162,7 +164,7 @@ def plot_hue(dates,hue_1,hue_1_err,hue_2,hue_2_err,hue_3,hue_3_err):
     ax1.errorbar(dates,hue_2,yerr=hue_2_err,fmt='o',ms=10,color=colors[2],label="3-12 keV")
     ax1.errorbar(dates,hue_3,yerr=hue_3_err,fmt='o',ms=10,color=colors[3],label="0.3-12 keV")
     ax1.set_xlabel("Date (MJD)",fontsize=20)
-    ax1.set_ylabel("Hue (deg)",fontsize=20)
+    ax1.set_ylabel("Hue (deg)",fontsize=20)    
     ax1.legend(loc="best")
     plt.tight_layout()
     fig.savefig(paths.plotdir+"Hue_"+paths.source_name+".pdf")
@@ -236,6 +238,12 @@ def calculate_hue(emin,emax):
     
     for index in range(len(paths.obsid_list)):
         #check here for error bars etc, loop over all observations and blabla
+        check = True
+        for value in np.rollaxis(colour_contents, 0):
+            if (np.all(value) > 0):
+                check = False
+        
+        if (np.all(colour_contents.T[0][index]) >0 )
         hue_x = np.log10(colour_contents.T[0][index])-np.log10(4.51920)
         hue_y = -np.log10(colour_contents.T[2][index])+np.log10(0.453724)
         hue[index] = np.arctan2(hue_y,hue_x)*180/3.14+135    

@@ -12,7 +12,7 @@ def rebin_spectra():
         spectrum_file=paths.specdir+paths.obsid_list[index]+".pha"
         oversample_file=paths.specdir+paths.obsid_list[index]+"_ovs.pha"
         rebin_file=paths.specdir+paths.obsid_list[index]+"_rebin.pha"
-        resolution_oversample_string = "grppha "+spectrum_file+" !"+oversample_file+" \"reset quality & bad 0-29 1200-1500 & group nicer_channels_to_group.txt & exit\"\n"
+        resolution_oversample_string = "grppha "+spectrum_file+" !"+oversample_file+" \"reset quality & bad 0-29 1200-1500 & group ~/Software/Chromie/nicer_channels_to_group.txt & exit\"\n"
         #note: the grppha log info is added by hand here because grppha is annoying in heasoftpy   
         os.system(resolution_oversample_string)     
         grp_output = subprocess.check_output(resolution_oversample_string, shell=True,text=True)

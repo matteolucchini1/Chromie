@@ -1,10 +1,8 @@
 def extract_timing():
-    import os
     import paths
     import logs
-    logs.output("extract")
-    print("Extracting timing properties:")
-       
+    logs.output("extract_psd")
+   
     #clean up hue output files
     huepath=paths.productdir+"/*PC.dat"
     string="rm -r "+huepath
@@ -20,73 +18,70 @@ def extract_timing():
         events_to_PSD(3.,12.,index) 
         
     logs.stop_logging()
-
+    
 def events_to_PSD(emin,emax,index):
-#    import os
-    from stingray.gti import create_gti_from_condition, gti_border_bins, time_intervals_from_gtis, cross_two_gtis
-    from stingray.utils import show_progress
-    from stingray.fourier import avg_cs_from_events, avg_pds_from_events, poisson_level, get_average_ctrate
-    from stingray import AveragedPowerspectrum, AveragedCrossspectrum, EventList
-    from stingray.modeling.parameterestimation import PSDLogLikelihood
-    import heasoftpy as hsp
     import paths
     import logs
-    fname = paths.obsdir[index]+"/ni"+paths.obsid_list[index]+"_0mpu7_cl.evt"
-    events = EventList.read(fname, "hea")
-    events.fname = fname
-    energy_band = [emin,emax]
-    events_filtered = events.filter_energy_range(energy_band)
     segment_size=512
     dt=1/64
     norm="frac"
     print("Computing PSD")
-    psd = AveragedPowerspectrum.from_events(events_filtered, segment_size=segment_size, dt=dt,
-                                            norm=norm, use_common_mean=True)
-    #Calculate the mean count rate, Poisson noise, and rebin
-    ctrate = get_average_ctrate(events_filtered.time, events_filtered.gti, segment_size)
-    noise = poisson_level(norm, meanrate=ctrate)
-    psd_reb = psd.rebin_log(0.01)
-       
-    #plot PSDs before and after rebinning
+    
+    fname = paths.obsdir[index]+"/ni"+paths.obsid_list[index]+"_0mpu7_cl.evt"
+    events = EventList.read(fname, "hea")
+    events.fname = fname
+    energy_band = [emin,emax]
+    events_filtered = events.filter_energy_range(energy_band)    
     plotname = str(emin)+"_"+str(emax)
-    plot_rebins(psd,psd_reb,noise,index,plotname)
+    lightcurve_check(events,plotname,index)   
+     
+    duration_test = 0.
+    for time in np.rollaxis(events_filtered.gti, 0):
+        duration_test = np.max([time[1]-time[0],duration_test])
     
-    #calculate hue
-    get_power_colors(psd,noise,emin,emax)
-    
-    #save the psd to a dummy text file to import rebinned PSD to flx2xsp
-    print("Saving PSD to file")
-    save_path = paths.psdir+paths.obsid_list[index]+str(emin)+"_"+str(emax)+".dat"
-    save_file = open(save_path, "w+")
-    bin_width = psd_reb.df*psd_reb.k/2
-    for i in range(len(psd_reb.freq)):
-        save_file.write(str(psd_reb.freq[i]-bin_width[i])+" "+str(psd_reb.freq[i]+bin_width[i])+" "
-                       +str(psd_reb.power[i]*bin_width[i])+" "+str(psd_reb.power_err[i]*bin_width[i])+"\n")
-    save_file.close()
+    if (duration_test > segment_size):
+        psd = AveragedPowerspectrum.from_events(events_filtered, segment_size=segment_size, dt=dt,
+                                        norm=norm, use_common_mean=True)
+        #Calculate the mean count rate, Poisson noise, and rebin
+        ctrate = get_average_ctrate(events_filtered.time, events_filtered.gti, segment_size)
+        noise = poisson_level(norm, meanrate=ctrate)
+        psd_reb = psd.rebin_log(0.01)
 
-    #run flx2xsp to convert to fits file
-    print("Converting PSD to fits")
-    flx2xsp = hsp.HSPTask('ftflx2xsp')
-    res2xsp = flx2xsp(infile=paths.psdir+paths.obsid_list[index]+str(emin)+"_"+str(emax)+".dat",
-                      phafile=paths.psdir+paths.obsid_list[index]+"_"+str(emin)+"_"+str(emax)+".pha",
-                      rspfile=paths.psdir+paths.obsid_list[index]+"_"+str(emin)+"_"+str(emax)+"_resp.rsp")
-    if res2xsp.returncode != 0:
-        print('Conversion failed')
-    for o in res2xsp.output[:]:
-        print(o)
+        #plot PSDs before and after rebinning
+        plot_rebins(psd,psd_reb,noise,index,plotname)
+
+        #calculate power colours
+        get_power_colors(psd,noise,emin,emax)
+
+        #save the psd to a dummy text file to import rebinned PSD to flx2xsp
+        print("Saving PSD to file")
+        save_path = paths.psdir+paths.obsid_list[index]+str(emin)+"_"+str(emax)+".dat"
+        save_file = open(save_path, "w+")
+        bin_width = psd_reb.df*psd_reb.k/2
+        for i in range(len(psd_reb.freq)):
+            save_file.write(str(psd_reb.freq[i]-bin_width[i])+" "+str(psd_reb.freq[i]+bin_width[i])+" "
+                           +str(psd_reb.power[i]*bin_width[i])+" "+str(psd_reb.power_err[i]*bin_width[i])+"\n")
+        save_file.close()
+
+        #run flx2xsp to convert to fits file
+        print("Converting PSD to fits")
+        flx2xsp = hsp.HSPTask('ftflx2xsp')
+        res2xsp = flx2xsp(infile=paths.psdir+paths.obsid_list[index]+str(emin)+"_"+str(emax)+".dat",
+                          phafile=paths.psdir+paths.obsid_list[index]+"_"+str(emin)+"_"+str(emax)+".pha",
+                          rspfile=paths.psdir+paths.obsid_list[index]+"_"+str(emin)+"_"+str(emax)+"_resp.rsp")
+        if res2xsp.returncode != 0:
+            print('Conversion successful')
+        for o in res2xsp.output[:]:
+            print(o)
+        
+    else:
+        print("No GTIs long enough for obsid: ",paths.obsid_list[index])
+        no_powercolors(emin,emax)
+
 
 def plot_rebins(psd1,psd2,noise,index,plotname):
-    import matplotlib as mpl
-    import matplotlib.pyplot as plt
-    from matplotlib import rc, rcParams
     import paths
     import logs
-    
-    colors=['#9c394a','#b4c5f6','#7ba4f6','#29318b','#62737b']
-    rc('text',usetex=True)
-    rc('font',**{'family':'serif','serif':['Computer Modern']})
-    plt.rcParams.update({'font.size': 18})
-    
     print("Plotting binned and unbinned PSD")
     band1 = 0.0039
     band2 = 0.031
@@ -117,10 +112,9 @@ def plot_rebins(psd1,psd2,noise,index,plotname):
     plt.tight_layout()
     fig.savefig(paths.plotdir+"PSD_"+paths.obsid_list[index]+"_"+plotname+".pdf")
     plt.close(fig)
-    print("Plot done")  
+    print("PSD plot done")  
 
 def get_power_colors(psd,noise,emin,emax):
-    import numpy as np
     import paths
     import logs
     #note: pass the UNBINNED power spectrum here, there are fewer issues with bin widths 
@@ -161,5 +155,28 @@ def get_power_colors(psd,noise,emin,emax):
                         (variance_errors[3]/float(variances[3]))**2)*pc2
     colorfile = paths.productdir+paths.source_name+"_"+str(emin)+"_"+str(emax)+"_PC.dat"
     with open(colorfile,'a+') as file:
-        file.write(str(pc1)+" "+str(pc1_error)+" "+str(pc2)+" "+str(pc2_error)+"\n")
+        file.write("Nan NaN NaN NaN \n")
 
+def no_powercolors(emin,emax):    
+    import paths
+    import logs
+    colorfile = paths.productdir+paths.source_name+"_"+str(emin)+"_"+str(emax)+"_PC.dat"
+    #note: these are set to nan so that the plots will just skip them
+    with open(colorfile,'a+') as file:
+        file.write(str(NaN)+" "+str(NaN)+" "+str(NaN)+" "+str(NaN)+"\n")
+
+def lightcurve_check(events,plotname,index):
+    import paths
+    import logs
+    print("Checking GTIs")
+    # Create light curve and apply GTIs
+    lc_raw = events.to_lc(dt=1/64)
+    lc_raw.apply_gtis()
+    fig, (ax1) = plt.subplots(1,1,figsize=(9.,6.)) 
+    ax1.plot(lc_raw.time, lc_raw.counts, color=colors[3], label="Raw")
+    #ax1.plot(lc.time, lc.counts, color=colors[3], label="Cleaned",linewidth=3)
+    ax1.set_xlabel(f"Time (s from {events.mjdref})",fontsize=20)
+    ax1.set_ylabel(f"Counts/bin",fontsize=20)
+    fig.savefig(paths.plotdir+"LC_"+paths.obsid_list[index]+"_"+plotname+".pdf") 
+    plt.close(fig)
+    print("Lightcurve plot done")

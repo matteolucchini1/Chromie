@@ -12,7 +12,7 @@ def spectral_analysis():
     Xset.abund = "wilm"
     Xset.cosmo = "67.4 -0.5275 0.685"
     Xset.xsect = "vern"
-    Xset.parallel.leven = 4
+    Xset.parallel.leven = 1
     Xset.chatter = 10
     #this needs to be set by hand because xspec is annoying
     Xset.openLog(paths.logdir+"spectral_analysis.log")
@@ -42,17 +42,17 @@ def spectral_analysis():
         rate_low_err = spectrum.rate[1]
         #3 to 10 keV: 
         spectrum.ignore("0.3-3.0")
-        spectrum.notice("3.0-10.0")
+        spectrum.notice("3.0-12.0")
         rate_high = spectrum.rate[0]
         rate_high_err = spectrum.rate[1]
         #RXTE-like band 1: 3 to 6 keV
-        spectrum.ignore("3.0-10.0")
+        spectrum.ignore("3.0-12.0")
         spectrum.notice("3.0-6.0")
         RXTE_rate_low = spectrum.rate[0]
         RXTE_rate_low_err = spectrum.rate[1]
         #RXTE-like band 2: 6 to 10 keV
         spectrum.ignore("3.0-6.0")
-        spectrum.notice("6.0-10.0")
+        spectrum.notice("6.0-12.0")
         RXTE_rate_high= spectrum.rate[0]
         RXTE_rate_high_err = spectrum.rate[1]  
         #full band: 0.3 to 10 keV

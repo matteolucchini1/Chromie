@@ -24,10 +24,11 @@ Before running the pipeline, specify the path to your data folder in paths.py. T
 you downloaded all the observations; you can use the variable source\_name to organize your data more easily. The variable obsid\_list 
 should point to a file in the Obsid\_list folder with a list of NICER obsids (two files are provided as an exmple); this should be
 identical to the observations you downloaded. By default, the pipeline will produce two folder (Logs and Products) in the nicerdatadir
-path with all the products of the code. You will also need to set the correct path to the geomagnetic data folder in extract\_spectra().
+path with all the products of the code. You will also need to set the correct path to the geomagnetic data folder in paths.py,
+and update the path to your chromie installation in rebin\_spectra to point to the nicer\_channels\_to\_group.txt file.
 
 
-After setting up the path, Chromie runs through different modules to reduce the data from level-1 NICER files to publication-level
+After setting up the paths, Chromie runs through different modules to reduce the data from level-1 NICER files to publication-level
 products. Each module can be run independently, provided the previous steps completed succesfully. The only exception is run\_nicerl2()
 and extract\_spectra(); currently you always need to run the former before the latter due to weird behavior on HEASOFT, and you also 
 always need to run set\_mkf() first. This will be fixed in a future version. 

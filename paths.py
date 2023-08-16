@@ -31,6 +31,11 @@ if not os.path.exists(lcplotir):
     os.makedirs(lcplotir)
     print(f'Created {lcplotir}')
 
+lagplotir = plotdir+'LagFreq/'
+if not os.path.exists(lagplotir):
+    os.makedirs(lagplotir)
+    print(f'Created {lagplotir}')
+
 psdplotir = plotdir+'PSDs/'
 if not os.path.exists(psdplotir):
     os.makedirs(psdplotir)

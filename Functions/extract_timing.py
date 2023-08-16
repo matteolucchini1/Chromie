@@ -2,7 +2,7 @@ def extract_timing():
     import os
     import paths
     import logs
-    logs.output("extract_psd")
+    logs.output("extract_timing")
    
     #clean up hue output files
     huepath=paths.productdir+"/*PC.dat"
@@ -18,6 +18,10 @@ def extract_timing():
         events_to_PSD(0.3,3.,index)         
         print("Extracting high energy band PSD")
         events_to_PSD(3.,12.,index) 
+        print("Computing lag frequency spectra")
+        events_to_lagf(index)
+        print("Computing coherence")
+        events_to_coherence(index)
         
     logs.stop_logging()
     
@@ -26,7 +30,6 @@ def events_to_PSD(emin,emax,index):
     from stingray.utils import show_progress
     from stingray.fourier import avg_cs_from_events, avg_pds_from_events, poisson_level, get_average_ctrate
     from stingray import AveragedPowerspectrum, AveragedCrossspectrum, EventList
-    from stingray.modeling.parameterestimation import PSDLogLikelihood
     import heasoftpy as hsp
     import numpy as np
     import paths
@@ -175,6 +178,119 @@ def get_power_colors(psd,noise,emin,emax):
     colorfile = paths.productdir+paths.source_name+"_"+str(emin)+"_"+str(emax)+"_PC.dat"
     with open(colorfile,'a+') as file:
         file.write(str(pc1)+" "+str(pc1_error)+" "+str(pc2)+" "+str(pc2_error)+"\n")
+
+def events_to_lagf(index):
+    from stingray.gti import create_gti_from_condition, gti_border_bins, time_intervals_from_gtis, cross_two_gtis
+    from stingray.utils import show_progress
+    from stingray.fourier import avg_cs_from_events, avg_pds_from_events, poisson_level, get_average_ctrate
+    from stingray import AveragedPowerspectrum, AveragedCrossspectrum, EventList
+    import numpy as np
+    import paths
+    import logs
+   
+    band1 = [0.3,1.0]
+    band2 = [2.0,4.0]
+    #tbd - figure out the optimal band here, reference band is the reverberation band I think 
+    band3 = [6.,7.0] 
+    fname = paths.obsdir[index]+"/ni"+paths.obsid_list[index]+"_0mpu7_cl.evt"
+    events = EventList.read(fname, "hea")
+    events.fname = fname    
+    ref_band = band2
+    reverb_band_soft = band1
+    reverb_band_Fe = band3
+    events_ref = events.filter_energy_range(ref_band)
+    events_soft = events.filter_energy_range(reverb_band_soft) 
+    events_Fe = events.filter_energy_range(reverb_band_Fe)       
+    cs_soft = AveragedCrossspectrum.from_events(events_ref, events_soft, segment_size=2., dt=0.005, norm="frac")
+    cs_soft = cs_soft.rebin_log(0.1)
+    cs_Fe = AveragedCrossspectrum.from_events(events_ref, events_Fe, segment_size=2., dt=0.005, norm="frac")
+    cs_Fe = cs_Fe.rebin_log(0.1)
+    lag_soft, lag_soft_e = cs_soft.time_lag()
+    lag_Fe, lag_Fe_e = cs_Fe.time_lag()
+    plot_lags(cs_soft.freq,lag_soft,lag_soft_e,lag_Fe,lag_Fe_e,index)
+    
+def plot_lags(freq,lag1,lag1_e,lag2,lag2_e,index):
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    from matplotlib import rc, rcParams
+    import paths
+    import logs
+    colors=['#9c394a','#b4c5f6','#7ba4f6','#29318b','#62737b']
+    rc('text',usetex=True)
+    rc('font',**{'family':'serif','serif':['Computer Modern']})
+    plt.rcParams.update({'font.size': 18})
+    
+    print("Plotting lag-frequency: ")
+    fig, (ax1) = plt.subplots(1,1,figsize=(9.,6.)) 
+    ax1.errorbar(freq,lag1,yerr=lag1_e,color=colors[3],label="0.3-1/2-4 keV",drawstyle="steps-mid",lw=3,zorder=2)
+    ax1.errorbar(freq,lag2,yerr=lag2_e,color=colors[1],label="6.0-7.0/2-4 keV",drawstyle="steps-mid",lw=3,zorder=1)
+    ax1.axhline(0, ls=":",color=colors[4],linewidth=3)
+    ax1.set_xlabel("Frequency (Hz)",fontsize=20)
+    ax1.set_ylabel("Lag (s)",fontsize=20)
+    ax1.set_xscale("log",base=10)
+    ax1.legend(loc="upper right")
+    ax1.set_xlim([0.45,40.])
+    plt.tight_layout()
+    fig.savefig(paths.lagplotir+"LagF_"+paths.obsid_list[index]+".pdf")
+    plt.close(fig)
+    print("Lag-frequency plot done") 
+
+def events_to_coherence(index):
+    from stingray.gti import create_gti_from_condition, gti_border_bins, time_intervals_from_gtis, cross_two_gtis
+    from stingray.utils import show_progress
+    from stingray.fourier import avg_cs_from_events, avg_pds_from_events, poisson_level, get_average_ctrate
+    from stingray import AveragedPowerspectrum, AveragedCrossspectrum, EventList
+    import numpy as np
+    import paths
+    import logs
+   
+    band1 = [0.3,1.0]
+    band2 = [2.0,4.0]
+    #tbd - figure out the optimal band here, reference band is the reverberation band I think 
+    band3 = [6.,7.0] 
+    fname = paths.obsdir[index]+"/ni"+paths.obsid_list[index]+"_0mpu7_cl.evt"
+    events = EventList.read(fname, "hea")
+    events.fname = fname    
+    ref_band = band2
+    reverb_band_soft = band1
+    reverb_band_Fe = band3
+    events_ref = events.filter_energy_range(ref_band)
+    events_soft = events.filter_energy_range(reverb_band_soft) 
+    events_Fe = events.filter_energy_range(reverb_band_Fe)       
+    cs_soft = AveragedCrossspectrum.from_events(events_ref, events_soft, segment_size=10., dt=0.005, norm="frac")
+    cs_soft = cs_soft.rebin_log(0.1)
+    cs_Fe = AveragedCrossspectrum.from_events(events_ref, events_Fe, segment_size=10., dt=0.005, norm="frac")
+    cs_Fe = cs_Fe.rebin_log(0.1)
+    coh_soft, coh_soft_e = cs_soft.coherence()
+    coh_Fe, coh_Fe_e = cs_Fe.coherence()
+    plot_coherence(cs_soft.freq,coh_soft,coh_soft_e,coh_Fe,coh_Fe_e,index)
+
+def plot_coherence(freq,coh1,coh1_e,coh2,coh2_e,index):
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    from matplotlib import rc, rcParams
+    import paths
+    import logs
+    colors=['#9c394a','#b4c5f6','#7ba4f6','#29318b','#62737b']
+    rc('text',usetex=True)
+    rc('font',**{'family':'serif','serif':['Computer Modern']})
+    plt.rcParams.update({'font.size': 18})
+    
+    print("Plotting coherence: ")
+    fig, (ax1) = plt.subplots(1,1,figsize=(9.,6.)) 
+    ax1.errorbar(freq,coh1,yerr=coh1_e,color=colors[3],label="0.3-1/2-4 keV",drawstyle="steps-mid",lw=3,zorder=2)
+    ax1.errorbar(freq,coh2,yerr=coh2_e,color=colors[1],label="6.0-7.0/2-4 keV",drawstyle="steps-mid",lw=3,zorder=1)
+    ax1.axhline(1, ls=":",color=colors[4],linewidth=3)
+    ax1.set_xlabel("Frequency (Hz)",fontsize=20)
+    ax1.set_ylabel("Coherence",fontsize=20)
+    ax1.set_xscale("log",base=10)
+    ax1.set_yscale("log",base=10)
+    ax1.legend(loc="lower left")
+    ax1.set_xlim([0.09,110.])
+    plt.tight_layout()
+    fig.savefig(paths.lagplotir+"Coh_"+paths.obsid_list[index]+".pdf")
+    plt.close(fig)
+    print("Coherence plot done") 
 
 def no_powercolors(emin,emax):    
     import paths

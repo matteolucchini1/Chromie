@@ -136,7 +136,7 @@ def filter_powercolours(colors):
     PC2=[]
     PC2_err=[]
     for i in range(len(colors.T[0])):
-        if (colors.T[0][i]-3.*colors.T[1][i]) > 0 and (colors.T[2][i]-3.*colors.T[3][i]) > 0:
+        if (colors.T[0][i]-1.5*colors.T[1][i]) > 0 and (colors.T[2][i]-1.5*colors.T[3][i]) > 0:
             PC1.append(colors.T[0][i])
             PC1_err.append(colors.T[1][i])
             PC2.append(colors.T[2][i]) 

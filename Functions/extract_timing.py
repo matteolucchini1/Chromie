@@ -13,15 +13,17 @@ def extract_timing():
         print("------------------------------------------------------------")
         print("Obsid:",paths.obsid_list[index])
         print("Extracting full band PSD")
-        events_to_PSD(0.3,12.,index)         
+        #events_to_PSD(0.3,12.,index)         
         print("Extracting low energy band PSD")
-        events_to_PSD(0.3,3.,index)         
+        #events_to_PSD(0.3,3.,index)         
         print("Extracting high energy band PSD")
-        events_to_PSD(3.,12.,index) 
+        #events_to_PSD(3.,12.,index) 
         print("Computing lag frequency spectra")
-        events_to_lagf(index)
+        #events_to_lagf(index)
         print("Computing coherence")
-        events_to_coherence(index)
+       # events_to_coherence(index)
+        print("Computing dynamical psd")
+        events_to_dyn(index)
         
     logs.stop_logging()
     
@@ -179,6 +181,14 @@ def get_power_colors(psd,noise,emin,emax):
     with open(colorfile,'a+') as file:
         file.write(str(pc1)+" "+str(pc1_error)+" "+str(pc2)+" "+str(pc2_error)+"\n")
 
+def no_powercolors(emin,emax):    
+    import paths
+    import logs
+    colorfile = paths.productdir+paths.source_name+"_"+str(emin)+"_"+str(emax)+"_PC.dat"
+    #note: these are set to nan so that the plots will just skip them
+    with open(colorfile,'a+') as file:
+        file.write("Nan NaN NaN NaN \n")
+
 def events_to_lagf(index):
     from stingray.gti import create_gti_from_condition, gti_border_bins, time_intervals_from_gtis, cross_two_gtis
     from stingray.utils import show_progress
@@ -292,13 +302,69 @@ def plot_coherence(freq,coh1,coh1_e,coh2,coh2_e,index):
     plt.close(fig)
     print("Coherence plot done") 
 
-def no_powercolors(emin,emax):    
+def events_to_dyn(index):
+    from stingray.gti import create_gti_from_condition, gti_border_bins, time_intervals_from_gtis, cross_two_gtis
+    from stingray.utils import show_progress
+    from stingray.fourier import avg_cs_from_events, avg_pds_from_events, poisson_level, get_average_ctrate
+    from stingray import AveragedPowerspectrum, AveragedCrossspectrum, EventList, DynamicalPowerspectrum
+    import numpy as np
     import paths
-    import logs
-    colorfile = paths.productdir+paths.source_name+"_"+str(emin)+"_"+str(emax)+"_PC.dat"
-    #note: these are set to nan so that the plots will just skip them
-    with open(colorfile,'a+') as file:
-        file.write("Nan NaN NaN NaN \n")
+    import logs  
+ 
+    norm="frac"
+    fname = paths.obsdir[index]+"/ni"+paths.obsid_list[index]+"_0mpu7_cl.evt"
+    events = EventList.read(fname, "hea")
+    events.fname = fname
+    time_resolution = 150
+    ctrate = get_average_ctrate(events.time, events.gti, time_resolution)
+    noise = poisson_level(norm, meanrate=ctrate)
+    #this ensures that the GTIs are large enough for the time resolution    
+    duration_test = 0.
+    for time in np.rollaxis(events.gti, 0):
+        duration_test = np.max([time[1]-time[0],duration_test])
+    if (duration_test < time_resolution):
+        time_resolution = duration_test
+    #to get the dynamical psd we need to turn event files into a lightcurve
+    lightcurve_full = events.to_lc(dt=0.025)
+    lightcurve_full.apply_gtis()
+    dyn_psd = DynamicalPowerspectrum(lightcurve_full, segment_size=time_resolution)
+    dyn_psd = dyn_psd.rebin_frequency(df_new=0.1, method="average")
+    plot_dyn(index,dyn_psd,noise)
+
+def plot_dyn(index,psd,noise):   
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    from matplotlib import rc, rcParams  
+    import numpy as np
+    import paths
+    import logs  
+
+    colors=['#9c394a','#b4c5f6','#7ba4f6','#29318b','#62737b']
+    rc('text',usetex=True)
+    rc('font',**{'family':'serif','serif':['Computer Modern']})
+    plt.rcParams.update({'font.size': 18})
+    print("Plotting dynamical PSD: ")  
+     
+    #tbd: move this to a separate function
+    psd_plot = np.zeros((len(psd.freq), len(psd.time)))  
+    for i in range(len(psd.freq)):
+        for j in range(len(psd.time)):
+            psd_plot[i][j] = (psd.dyn_ps[i][j]-noise)*psd.freq[i]    
+    color_max = np.log10(1.05*psd_plot.max())
+    color_min = color_max-1.5
+        
+    fig, (ax1) = plt.subplots(1,1,figsize=(9.,6.)) 
+    extent = min(psd.time), max(psd.time), min(psd.freq), max(psd.freq)
+    img = ax1.imshow(np.log10(psd_plot), aspect="auto", origin="lower", interpolation="none", 
+                     extent=extent, vmax=color_max, vmin=color_min, cmap = "magma")
+    ax1.set_xlabel('Time (s)',fontsize="20")
+    ax1.set_yscale("log",base=10)
+    ax1.set_ylabel('Frequency (Hz)',fontsize="20")
+    plt.colorbar(img, ax=ax1,label='Power')
+    plt.tight_layout()
+    fig.savefig(paths.psdplotir+"Dynamic_"+paths.obsid_list[index]+".pdf")
+    plt.close(fig)    
+    print("Dynamical PSD plot done")  
 
 def lightcurve_check(events,plotname,index):
     import matplotlib as mpl

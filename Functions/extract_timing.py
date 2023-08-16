@@ -89,8 +89,17 @@ def events_to_PSD(emin,emax,index):
 
 
 def plot_rebins(psd1,psd2,noise,index,plotname):
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    from matplotlib import rc, rcParams
     import paths
     import logs
+    
+    colors=['#9c394a','#b4c5f6','#7ba4f6','#29318b','#62737b']
+    rc('text',usetex=True)
+    rc('font',**{'family':'serif','serif':['Computer Modern']})
+    plt.rcParams.update({'font.size': 18})
+    
     print("Plotting binned and unbinned PSD")
     band1 = 0.0039
     band2 = 0.031
@@ -124,6 +133,7 @@ def plot_rebins(psd1,psd2,noise,index,plotname):
     print("PSD plot done")  
 
 def get_power_colors(psd,noise,emin,emax):
+    import numpy as np
     import paths
     import logs
     #note: pass the UNBINNED power spectrum here, there are fewer issues with bin widths 
@@ -164,7 +174,7 @@ def get_power_colors(psd,noise,emin,emax):
                         (variance_errors[3]/float(variances[3]))**2)*pc2
     colorfile = paths.productdir+paths.source_name+"_"+str(emin)+"_"+str(emax)+"_PC.dat"
     with open(colorfile,'a+') as file:
-        file.write("Nan NaN NaN NaN \n")
+        file.write(str(pc1)+" "+str(pc1_error)+" "+str(pc2)+" "+str(pc2_error)+"\n")
 
 def no_powercolors(emin,emax):    
     import paths
@@ -172,12 +182,21 @@ def no_powercolors(emin,emax):
     colorfile = paths.productdir+paths.source_name+"_"+str(emin)+"_"+str(emax)+"_PC.dat"
     #note: these are set to nan so that the plots will just skip them
     with open(colorfile,'a+') as file:
-        file.write(str(NaN)+" "+str(NaN)+" "+str(NaN)+" "+str(NaN)+"\n")
+        file.write("Nan NaN NaN NaN \n")
 
 def lightcurve_check(events,plotname,index):
+    import matplotlib as mpl
+    import matplotlib.pyplot as plt
+    from matplotlib import rc, rcParams
     import paths
     import logs
-    print("Checking GTIs")
+    
+    colors=['#9c394a','#b4c5f6','#7ba4f6','#29318b','#62737b']
+    rc('text',usetex=True)
+    rc('font',**{'family':'serif','serif':['Computer Modern']})
+    plt.rcParams.update({'font.size': 18})
+    
+    print("Checking Lightcurve")
     # Create light curve and apply GTIs
     lc_raw = events.to_lc(dt=1/64)
     lc_raw.apply_gtis()

@@ -117,7 +117,7 @@ def plot_powercolours(list_1,list_2,list_3):
     ax1.scatter(4.51920, 0.453724,marker='X',color='black',s=400,zorder=20)
     ax1.set_xscale("log",base=10)
     ax1.set_yscale("log",base=10)
-    ax1.set_xlim([0.0011,200.0])
+    ax1.set_xlim([0.011,150.0])
     ax1.set_ylim([0.01,250.0])
     ax1.set_xlabel("PC1",fontsize=20)
     ax1.set_ylabel("PC2",fontsize=20)
@@ -126,7 +126,7 @@ def plot_powercolours(list_1,list_2,list_3):
     fig.savefig(paths.plotdir+"Powercolours_"+paths.source_name+".pdf")
     plt.close(fig) 
 
-def fiter_powercolours(colors):
+def filter_powercolours(colors):
     import numpy as np
     import paths
     import logs  
@@ -138,9 +138,9 @@ def fiter_powercolours(colors):
     for i in range(len(colors.T[0])):
         if (colors.T[0][i]-3.*colors.T[1][i]) > 0 and (colors.T[2][i]-3.*colors.T[3][i]) > 0:
             PC1.append(colors.T[0][i])
-            PC1_err.append(colors.T[1][i]])
+            PC1_err.append(colors.T[1][i])
             PC2.append(colors.T[2][i]) 
-            PC2_err.append(colors.T[3][i]])      
+            PC2_err.append(colors.T[3][i])      
     return PC1,PC1_err,PC2,PC2_err
 
 def plot_lightcurve(dates,counts,counts_err):

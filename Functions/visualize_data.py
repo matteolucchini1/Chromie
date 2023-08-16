@@ -76,13 +76,13 @@ def plot_hid(rate,rate_err,hr_1,hr_1_err,hr_2,hr_2_err):
     print("Plotting HID: ")
     fig, ((ax1), (ax2) ) = plt.subplots(1,2,figsize=(18.,6.))    
     ax1.errorbar(hr_1,rate,xerr=hr_1_err,yerr=rate_err,
-                 fmt='o',ms=10,mfc=colors[3],mec=colors[3],color=colors[2],ls='-')
+                 fmt='o',ms=10,color=colors[3])
     ax1.set_yscale("log",base=10)
     ax1.set_ylabel('0.3-10 keV counts/s',fontsize=20)
     ax1.set_xlabel('3-10 keV/0.3-3 keV counts/s',fontsize=20)
     
     ax2.errorbar(hr_2,rate,xerr=hr_2_err,yerr=rate_err,
-                 fmt='o',ms=10,mfc=colors[3],mec=colors[3],color=colors[2],ls='-')
+                 fmt='o',ms=10,color=colors[3])
     ax2.set_yscale("log",base=10)
     ax2.yaxis.set_major_formatter(plt.NullFormatter())  
     ax2.yaxis.set_minor_formatter(plt.NullFormatter())  
@@ -92,7 +92,7 @@ def plot_hid(rate,rate_err,hr_1,hr_1_err,hr_2,hr_2_err):
     fig.savefig(paths.plotdir+"HID_"+paths.source_name+".pdf") 
     plt.close(fig)
 
-def plot_powercolours(colors_1,colors_2,colors_3):
+def plot_powercolours(list_1,list_2,list_3):
     import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib import rc, rcParams
@@ -103,15 +103,17 @@ def plot_powercolours(colors_1,colors_2,colors_3):
     colors=['#9c394a','#b4c5f6','#7ba4f6','#29318b','#62737b']
     rc('text',usetex=True)
     rc('font',**{'family':'serif','serif':['Computer Modern']})
-    plt.rcParams.update({'font.size': 18})
-    print("Plotting powercolours: ")
-    fig, (ax1) = plt.subplots(1,1,figsize=(9.,6.))      
-    ax1.errorbar(colors_1.T[0],colors_1.T[2],xerr=colors_1.T[1],yerr=colors_1.T[3],
-                 fmt='o',ms=10,color=colors[1],label="0.3-3 keV",ls='-')
-    ax1.errorbar(colors_2.T[0],colors_2.T[2],xerr=colors_2.T[1],yerr=colors_2.T[3],
-             fmt='o',ms=10,color=colors[2],label="3-12 keV",ls='-')
-    ax1.errorbar(colors_3.T[0],colors_3.T[2],xerr=colors_3.T[1],yerr=colors_3.T[3],
-             fmt='o',ms=10,color=colors[3],label="0.3-12 keV",ls='-')
+    plt.rcParams.update({'font.size': 18})       
+    print("Plotting powercolours: ")   
+
+    PC1_1,PC1_1_err,PC2_1,PC2_1_err = filter_powercolours(list_1)  
+    PC1_2,PC1_2_err,PC2_2,PC2_2_err = filter_powercolours(list_2) 
+    PC1_3,PC1_3_err,PC2_3,PC2_3_err = filter_powercolours(list_3)   
+     
+    fig, (ax1) = plt.subplots(1,1,figsize=(9.,6.))           
+    ax1.errorbar(PC1_1,PC2_1,xerr=PC1_1_err,yerr=PC2_1_err,fmt='o',ms=10,color=colors[1],label="0.3-3 keV")  
+    ax1.errorbar(PC1_2,PC2_2,xerr=PC1_2_err,yerr=PC2_2_err,fmt='o',ms=10,color=colors[2],label="3-12 keV")
+    ax1.errorbar(PC1_3,PC2_3,xerr=PC1_3_err,yerr=PC2_3_err,fmt='o',ms=10,color=colors[3],label="0.3-12 keV")
     ax1.scatter(4.51920, 0.453724,marker='X',color='black',s=400,zorder=20)
     ax1.set_xscale("log",base=10)
     ax1.set_yscale("log",base=10)
@@ -122,7 +124,24 @@ def plot_powercolours(colors_1,colors_2,colors_3):
     ax1.legend(loc="best")
     plt.tight_layout()
     fig.savefig(paths.plotdir+"Powercolours_"+paths.source_name+".pdf")
-    plt.close(fig)
+    plt.close(fig) 
+
+def fiter_powercolours(colors):
+    import numpy as np
+    import paths
+    import logs  
+    #this function includes only powercolours with sigma 3 times smaller than their magnitude  
+    PC1=[]
+    PC1_err=[]
+    PC2=[]
+    PC2_err=[]
+    for i in range(len(colors.T[0])):
+        if (colors.T[0][i]-3.*colors.T[1][i]) > 0 and (colors.T[2][i]-3.*colors.T[3][i]) > 0:
+            PC1.append(colors.T[0][i])
+            PC1_err.append(colors.T[1][i]])
+            PC2.append(colors.T[2][i]) 
+            PC2_err.append(colors.T[3][i]])      
+    return PC1,PC1_err,PC2,PC2_err
 
 def plot_lightcurve(dates,counts,counts_err):
     import matplotlib as mpl
@@ -192,12 +211,12 @@ def plot_evolution(dates,hue,hue_err,hardness,hardness_err,string):
     ax2 = ax1.twinx()
     ax2.errorbar(dates,hardness,yerr=hardness_err,fmt='o',ms=10,color=colors[2])
     ax2.set_ylabel('Spectral hardness',fontsize=20)    
-    ax2.spines['left'].set_color(colors[2])
-    ax1.tick_params(axis='y', colors=colors[2])
-    ax1.yaxis.label.set_color(colors[2])
-    ax2.spines['right'].set_color(colors[1])
-    ax2.tick_params(axis='y', colors=colors[1])
-    ax2.yaxis.label.set_color(colors[1])
+    ax2.spines['left'].set_color(colors[1])
+    ax1.tick_params(axis='y', colors=colors[1])
+    ax1.yaxis.label.set_color(colors[1])
+    ax2.spines['right'].set_color(colors[2])
+    ax2.tick_params(axis='y', colors=colors[2])
+    ax2.yaxis.label.set_color(colors[2])
     plt.tight_layout()
     fig.savefig(paths.plotdir+"HueAndHardness_"+string+"_"+paths.source_name+".pdf")
     plt.close(fig)
@@ -217,7 +236,7 @@ def plot_huevshardness(hue,hue_err,hardness,hardness_err,string):
     print("Plotting hue vs hardness: ")
     fig, (ax1) = plt.subplots(1,1,figsize=(9.,6.))    
     ax1.errorbar(hue,hardness,xerr=hue_err,yerr=hardness_err,
-                 fmt='o',ms=10,mfc=colors[3],mec=colors[3],color=colors[2],ls='-')
+                 fmt='o',ms=10,color=colors[3])
     ax1.set_xlabel('Hue (Deg)',fontsize=20)
     ax1.set_ylabel('Hardness',fontsize=20)
     plt.tight_layout()
@@ -237,13 +256,6 @@ def calculate_hue(emin,emax):
     hue_err = np.zeros(len(paths.obsid_list))
     
     for index in range(len(paths.obsid_list)):
-        #check here for error bars etc, loop over all observations and blabla
-        check = True
-        for value in np.rollaxis(colour_contents, 0):
-            if (np.all(value) > 0):
-                check = False
-        
-        if (np.all(colour_contents.T[0][index]) >0 )
         hue_x = np.log10(colour_contents.T[0][index])-np.log10(4.51920)
         hue_y = -np.log10(colour_contents.T[2][index])+np.log10(0.453724)
         hue[index] = np.arctan2(hue_y,hue_x)*180/3.14+135    
@@ -256,6 +268,6 @@ def calculate_hue(emin,emax):
             random_y = gauss(colour_contents.T[2][index],colour_contents.T[3][index])
             random_hue_y = np.log10(np.max([random_y,1e-5]))+np.log10(0.453724)
             hue_gen.append(np.arctan2(random_hue_x,random_hue_y)*180/3.14+135) 
-        hue_err[index] = np.std(hue_gen,axis=0)
+        hue_err[index] = np.std(hue_gen,axis=0)            
     
     return hue,hue_err

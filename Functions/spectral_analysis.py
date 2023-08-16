@@ -139,7 +139,7 @@ def plot_spectrum(index):
     ax2.set_ylabel("Ratio",fontsize=20)     
     plt.tight_layout()
     fig.subplots_adjust(hspace=0)  
-    fig.savefig(paths.plotdir+"Spectrum_"+paths.obsid_list[index]+".pdf") 
+    fig.savefig(paths.specplotir+"Spectrum_"+paths.obsid_list[index]+".pdf") 
     #delete spectra before moving on to the next
     plt.close(fig)
     AllData.clear()

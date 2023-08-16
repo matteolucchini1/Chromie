@@ -1,4 +1,5 @@
 def extract_timing():
+    import os
     import paths
     import logs
     logs.output("extract_psd")
@@ -10,6 +11,7 @@ def extract_timing():
     
     for index in range(len(paths.obsid_list)):
         print("------------------------------------------------------------")
+        print("Obsid:",paths.obsid_list[index])
         print("Extracting full band PSD")
         events_to_PSD(0.3,12.,index)         
         print("Extracting low energy band PSD")
@@ -20,6 +22,13 @@ def extract_timing():
     logs.stop_logging()
     
 def events_to_PSD(emin,emax,index):
+    from stingray.gti import create_gti_from_condition, gti_border_bins, time_intervals_from_gtis, cross_two_gtis
+    from stingray.utils import show_progress
+    from stingray.fourier import avg_cs_from_events, avg_pds_from_events, poisson_level, get_average_ctrate
+    from stingray import AveragedPowerspectrum, AveragedCrossspectrum, EventList
+    from stingray.modeling.parameterestimation import PSDLogLikelihood
+    import heasoftpy as hsp
+    import numpy as np
     import paths
     import logs
     segment_size=512
@@ -110,7 +119,7 @@ def plot_rebins(psd1,psd2,noise,index,plotname):
     ax2.set_ylabel(r"$\mathrm{(rms / mean)^2}$",fontsize=20);
     ax2.legend(loc='lower right')    
     plt.tight_layout()
-    fig.savefig(paths.plotdir+"PSD_"+paths.obsid_list[index]+"_"+plotname+".pdf")
+    fig.savefig(paths.psdplotir+"PSD_"+paths.obsid_list[index]+"_"+plotname+".pdf")
     plt.close(fig)
     print("PSD plot done")  
 
@@ -177,6 +186,6 @@ def lightcurve_check(events,plotname,index):
     #ax1.plot(lc.time, lc.counts, color=colors[3], label="Cleaned",linewidth=3)
     ax1.set_xlabel(f"Time (s from {events.mjdref})",fontsize=20)
     ax1.set_ylabel(f"Counts/bin",fontsize=20)
-    fig.savefig(paths.plotdir+"LC_"+paths.obsid_list[index]+"_"+plotname+".pdf") 
+    fig.savefig(paths.lcplotir+"LC_"+paths.obsid_list[index]+"_"+plotname+".pdf") 
     plt.close(fig)
     print("Lightcurve plot done")

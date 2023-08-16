@@ -21,6 +21,21 @@ if not os.path.exists(plotdir):
     os.makedirs(plotdir)
     print(f'Created {plotdir}')
 
+specplotir = plotdir+'Spectra/'
+if not os.path.exists(specplotir):
+    os.makedirs(specplotir)
+    print(f'Created {specplotir}')
+    
+lcplotir = plotdir+'Lightcurves/'
+if not os.path.exists(lcplotir):
+    os.makedirs(lcplotir)
+    print(f'Created {lcplotir}')
+
+psdplotir = plotdir+'PSDs/'
+if not os.path.exists(psdplotir):
+    os.makedirs(psdplotir)
+    print(f'Created {psdplotir}')
+
 specdir = productdir+'Spectra/'
 if not os.path.exists(specdir):
     os.makedirs(specdir)

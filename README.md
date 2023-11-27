@@ -10,11 +10,12 @@ not be relevant to other objects.
 
 ## System requirements
 
-Running Chromie requires installing common X-ray astronomy packages: HEASoft (version 6.31.1 or higher), including HEASoftPy
+Running Chromie requires installing common X-ray astronomy packages: HEASoft (version 6.32.1 or higher), including HEASoftPy
 and PyXspec, Stingray (version 1.1.2 or higher), Astropy (version 4.2 or higher), Numpy and Matplotlib. After installing HEASOFT
 make sure to set up your environment to analyze NICER data (https://heasarc.gsfc.nasa.gov/docs/nicer/analysis_threads/nicer-setup/).
 Beyond the basic Python3 packages, you will need to download the data you want to analyze and place it in a single folder. This can
-be done through the NICER master catalogue in the HEASARC archive (https://heasarc.gsfc.nasa.gov/W3Browse/nicer/nicermastr.html)
+be done through the NICER master catalogue in the HEASARC archive (https://heasarc.gsfc.nasa.gov/W3Browse/nicer/nicermastr.html). Note
+that if you have a HEASOFT version older than 6.32.1 installed, you may encounter issues when running nicerl2 for select observations.
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 

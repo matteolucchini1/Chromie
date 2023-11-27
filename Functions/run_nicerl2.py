@@ -11,7 +11,7 @@ def run_nicerl2(mkf):
     for index in range(len(paths.obsid_list)):
         nicerl2 = hsp.HSPTask('nicerl2')
         nicerl2.clobber="yes"
-        nicerl2.autoscreen="no"
+        nicerl2.autoscreen="yes"
         nicerl2.detlist="launch,-14,-34"
         # add the KP values to the mkf file during nicerl2 processing
         nicerl2.geomag_path="/home/matteo/Software/Geomag/"
